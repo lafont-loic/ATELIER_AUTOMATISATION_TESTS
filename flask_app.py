@@ -6,7 +6,7 @@ import time
 app = Flask(__name__)
 
 DB_PATH = '/home/loic75/mysite/historique_ratp.db'
-URL_API = "https://data.ratp.fr/api/records/1.0/search/?dataset=fontaines-a-eau-dans-le-reseau-ratp&q="
+URL_API = "https://jsonplaceholder.typicode.com/todos/1"
 
 @app.route("/")
 def consignes():
