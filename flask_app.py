@@ -27,30 +27,37 @@ def run():
     status_code = None
     contrat_valide = False
     error_message = None
-
-    try:
-        # 1. Test de Connexion & QoS (Timeout 5s)
-        response = requests.get(URL_API, timeout=5)
-        status_code = response.status_code
-        response.raise_for_status()
-        
-        # 2. Test du Contrat (Structure JSON)
-        data = response.json()
-        if "result" in data:
-            contrat_valide = True
-        else:
-            error_message = "Clé 'result' manquante dans le JSON"
+    
+    # On définit 2 tentatives (1 initiale + 1 retry)
+    max_attempts = 2
+    
+    for attempt in range(max_attempts):
+        try:
+            # On passe à 10s de timeout pour être plus tolérant
+            response = requests.get(URL_API, timeout=10)
+            status_code = response.status_code
+            response.raise_for_status()
             
-    except Exception as e:
-        error_message = str(e)
-        # Si on a eu une erreur de type 503 ou Timeout, on essaie de garder le code
-        if hasattr(e, 'response') and e.response is not None:
-            status_code = e.response.status_code
+            data = response.json()
+            if "result" in data:
+                contrat_valide = True
+                error_message = f"Réussi à l'essai {attempt + 1}"
+                break  # Succès ! On sort de la boucle de retry
+            else:
+                error_message = "Structure JSON invalide"
+                
+        except Exception as e:
+            error_message = f"Essai {attempt + 1} échoué: {str(e)}"
+            if hasattr(e, 'response') and e.response is not None:
+                status_code = e.response.status_code
+            
+            # Si c'est le premier échec, on attend une petite seconde avant de retenter
+            if attempt == 0:
+                time.sleep(1)
 
-    # Calcul de la latence (ms)
     latency_ms = (time.time() - start_time) * 1000
 
-    # 3. Sauvegarde dans la base de données
+    # Sauvegarde du résultat final
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
@@ -60,7 +67,6 @@ def run():
     conn.commit()
     conn.close()
 
-    # Redirection vers le dashboard pour voir le résultat
     return redirect(url_for('dashboard'))
 
 if __name__ == "__main__":
