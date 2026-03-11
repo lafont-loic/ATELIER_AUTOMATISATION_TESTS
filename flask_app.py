@@ -20,7 +20,13 @@ def dashboard():
     runs = cursor.fetchall()
     conn.close()
     return render_template('dashboard.html', runs=runs)
-
+     
+@app.route('/run')
+def run():
+    # ... tout le code de test (requests, time, etc.) ...
+    
+    # À la fin, après le conn.close()
+    return redirect(url_for('dashboard'))
 
 if __name__ == "__main__":
     # utile en local uniquement
