@@ -6,7 +6,7 @@ import time
 app = Flask(__name__)
 
 DB_PATH = '/home/loic75/mysite/historique_ratp.db'
-URL_API = "https://api.nationalize.io/?name=nathan"
+URL_API = "https://pokeapi.co/api/v2/pokemon/ditto"
 
 @app.route("/")
 def consignes():
