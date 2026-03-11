@@ -23,35 +23,33 @@ def dashboard():
 
 @app.route('/run')
 def run():
-    # 1. Configuration de base
     url = "https://api.nationalize.io/?name=nathan"
     start_time = time.time()
     
     try:
-        # 2. Appel API (le proxy laisse passer car c'est dans ta liste)
         r = requests.get(url, timeout=10)
         latence = (time.time() - start_time) * 1000
-        
-        # 3. Test de contrat ultra-simple
-        data = r.json()
-        est_valide = 1 if "country" in data else 0
-        msg = "OK" if est_valide else "Erreur Format"
         status = r.status_code
+        data = r.json()
+        
+        # DEBUG : On vérifie précisément la présence de 'country'
+        if status == 200 and "country" in data:
+            est_valide = 1
+            msg = f"OK ({len(data['country'])} pays trouvés)"
+        else:
+            est_valide = 0
+            # Si c'est pas valide, on enregistre le début du JSON reçu pour comprendre
+            msg = f"Erreur Format: {str(data)[:30]}"
 
     except Exception as e:
-        # En cas de plantage (proxy, coupure, etc.)
-        latence = 0
-        status = 0
-        est_valide = 0
-        msg = str(e)[:50] # On coupe le message s'il est trop long
+        latence, status, est_valide = 0, 0, 0
+        msg = f"Erreur Reseau: {str(e)[:30]}"
 
-    # 4. Enregistrement en base de données
+    # Sauvegarde (inchangée)
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO api_runs (endpoint_tested, status_code, latency_ms, contrat_valide, error_message)
-        VALUES (?, ?, ?, ?, ?)
-    """, (url, status, latence, est_valide, msg))
+    cursor.execute("INSERT INTO api_runs (endpoint_tested, status_code, latency_ms, contrat_valide, error_message) VALUES (?, ?, ?, ?, ?)", 
+                   (url, status, latence, est_valide, msg))
     conn.commit()
     conn.close()
 
