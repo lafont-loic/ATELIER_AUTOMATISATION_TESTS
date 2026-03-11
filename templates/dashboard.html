@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mon Dashboard API</title>
+    <style>
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid black; padding: 8px; text-align: left; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Historique des tests API</h1>
+    
+    <div>
+        <p>Latence moyenne : {{ avg_latency }} ms</p>
+    </div>
+
+    <table>
+        <tr>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Latence</th>
+            <th>Contrat Valide ?</th>
+        </tr>
+        {% for run in runs %}
+        <tr>
+            <td>{{ run.timestamp }}</td>
+            <td>{{ run.status_code }}</td>
+            <td>{{ run.latency_ms }} ms</td>
+            <td class="{{ 'success' if run.contrat_valide else 'error' }}">
+                {{ "OUI" if run.contrat_valide else "NON" }}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
