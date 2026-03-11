@@ -6,7 +6,7 @@ import time
 app = Flask(__name__)
 
 DB_PATH = '/home/loic75/mysite/historique_ratp.db'
-URL_API = "https://pokeapi.co/api/v2/pokemon/ditto"
+URL_API = "https://api.open-meteo.com/v1/forecast?latitude=48.85&longitude=2.35&current_weather=true"
 
 @app.route("/")
 def consignes():
