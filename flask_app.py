@@ -13,9 +13,9 @@ def consignes():
 
 @app.route("/dashboard")
 def dashboard():
-    # Connexion à la base
-    conn = sqlite3.connect('historique_ratp.db')
-    conn.row_factory = sqlite3.Row # Pour accéder aux colonnes par nom
+     # Connexion à la base avec le chemin fixe (absolu)
+    conn = sqlite3.connect('/home/loic75/mysite/historique_ratp.db')
+    conn.row_factory = sqlite3.Row
     
     # On récupère tous les tests
     runs = conn.execute('SELECT * FROM api_runs ORDER BY timestamp DESC').fetchall()
