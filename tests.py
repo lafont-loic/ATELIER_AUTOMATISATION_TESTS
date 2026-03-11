@@ -2,7 +2,7 @@ import requests
 import time
 import sqlite3
 
-URL = "# L'URL autorisée par PythonAnywhere
+URL = # L'URL autorisée par PythonAnywhere
 url = "https://api-ratp.pierre-grimaud.fr/v1/schedules/rers/a/chatelet+les+halles/A"
 
 # Ton test reste le même
