@@ -2,7 +2,12 @@ import requests
 import time
 import sqlite3
 
-URL = "https://data.ratp.fr/api/explore/v2.1/catalog/datasets/liste-des-stations-du-reseau-ferre-dile-de-france/records?limit=5"
+URL = "# L'URL autorisée par PythonAnywhere
+url = "https://api-ratp.pierre-grimaud.fr/v1/schedules/rers/a/chatelet+les+halles/A"
+
+# Ton test reste le même
+response = requests.get(url)
+# ... le reste de ton code pour enregistrer en base ..."
 
 def run_test():
     start_time = time.time()
