@@ -11,10 +11,6 @@ app = Flask(__name__)
 def consignes():
      return render_template('consignes.html')
 
-if __name__ == "__main__":
-    # utile en local uniquement
-    app.run(host="0.0.0.0", port=5000, debug=True)
-
 @app.route("/dashboard")
 def dashboard():
     # Connexion à la base
@@ -32,3 +28,8 @@ def dashboard():
     
     # On envoie les données au fichier HTML
     return render_template('dashboard.html', runs=runs, avg_latency=round(avg_latency, 2))
+
+
+if __name__ == "__main__":
+    # utile en local uniquement
+    app.run(host="0.0.0.0", port=5000, debug=True)
