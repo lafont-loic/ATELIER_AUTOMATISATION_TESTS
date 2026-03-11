@@ -27,37 +27,33 @@ def run():
     status_code = None
     contrat_valide = False
     error_message = None
-    
-    # On définit 2 tentatives (1 initiale + 1 retry)
-    max_attempts = 2
-    
-    for attempt in range(max_attempts):
-        try:
-            # On passe à 10s de timeout pour être plus tolérant
-            response = requests.get(URL_API, timeout=10)
-            status_code = response.status_code
-            response.raise_for_status()
-            
+
+    try:
+        # On augmente le timeout à 20s pour laisser une chance au proxy
+        # On peut aussi désactiver la vérification SSL si c'est elle qui bloque (verify=False)
+        response = requests.get(URL_API, timeout=20)
+        status_code = response.status_code
+        
+        if status_code == 200:
             data = response.json()
+            # Validation du contrat (Point A)
             if "result" in data:
                 contrat_valide = True
-                error_message = f"Réussi à l'essai {attempt + 1}"
-                break  # Succès ! On sort de la boucle de retry
+                error_message = "Succès"
             else:
-                error_message = "Structure JSON invalide"
-                
-        except Exception as e:
-            error_message = f"Essai {attempt + 1} échoué: {str(e)}"
-            if hasattr(e, 'response') and e.response is not None:
-                status_code = e.response.status_code
-            
-            # Si c'est le premier échec, on attend une petite seconde avant de retenter
-            if attempt == 0:
-                time.sleep(1)
+                error_message = "JSON mal formé"
+        else:
+            error_message = f"Erreur HTTP {status_code}"
 
+    except requests.exceptions.Timeout:
+        error_message = "Timeout (l'API est trop lente)"
+    except Exception as e:
+        error_message = f"Erreur : {str(e)}"
+
+    # On calcule le temps écoulé, même en cas d'erreur
     latency_ms = (time.time() - start_time) * 1000
 
-    # Sauvegarde du résultat final
+    # Sauvegarde
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
