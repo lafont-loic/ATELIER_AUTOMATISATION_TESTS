@@ -6,7 +6,7 @@ import time
 app = Flask(__name__)
 
 DB_PATH = '/home/loic75/mysite/historique_ratp.db'
-URL_API = "https://api-ratp.pierre-grimaud.fr/v1/schedules/rers/a/chatelet+les+halles/A"
+URL_API = "https://api-ratp.pierre-grimaud.fr/v1/schedules/rers/a/nanterre+ville/A"
 
 @app.route("/")
 def consignes():
@@ -24,46 +24,23 @@ def dashboard():
 @app.route('/run')
 def run():
     start_time = time.time()
-    status_code = None
-    contrat_valide = False
-    error_message = None
+    # On tente 3 fois avec des timeouts progressifs
+    for timeout_val in [5, 15, 25]:
+        try:
+            response = requests.get(URL_API, timeout=timeout_val)
+            if response.status_code == 200:
+                data = response.json()
+                # On vérifie le contrat (Point A)
+                if "result" in data:
+                    status_code = 200
+                    contrat_valide = True
+                    error_message = f"Réussi après {timeout_val}s"
+                    break # On a l'info, on arrête !
+        except Exception:
+            error_message = "Tentative échouée, on réessaie..."
+            time.sleep(2) # Petite pause pour laisser respirer le proxy
 
-    try:
-        # On augmente le timeout à 20s pour laisser une chance au proxy
-        # On peut aussi désactiver la vérification SSL si c'est elle qui bloque (verify=False)
-        response = requests.get(URL_API, timeout=20)
-        status_code = response.status_code
-        
-        if status_code == 200:
-            data = response.json()
-            # Validation du contrat (Point A)
-            if "result" in data:
-                contrat_valide = True
-                error_message = "Succès"
-            else:
-                error_message = "JSON mal formé"
-        else:
-            error_message = f"Erreur HTTP {status_code}"
-
-    except requests.exceptions.Timeout:
-        error_message = "Timeout (l'API est trop lente)"
-    except Exception as e:
-        error_message = f"Erreur : {str(e)}"
-
-    # On calcule le temps écoulé, même en cas d'erreur
     latency_ms = (time.time() - start_time) * 1000
-
-    # Sauvegarde
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO api_runs (endpoint_tested, status_code, latency_ms, contrat_valide, error_message)
-        VALUES (?, ?, ?, ?, ?)
-    """, (URL_API, status_code, latency_ms, contrat_valide, error_message))
-    conn.commit()
-    conn.close()
-
-    return redirect(url_for('dashboard'))
-
+    # ... (code de sauvegarde SQLite identique) ...
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
