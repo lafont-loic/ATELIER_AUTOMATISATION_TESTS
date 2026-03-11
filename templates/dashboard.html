@@ -2,42 +2,83 @@
 <html>
 <head>
     <title>Monitoring API RATP</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        table { border-collapse: collapse; width: 100%; font-family: sans-serif; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        th { background-color: #f4f4f4; }
-        .valid { color: green; font-weight: bold; }
-        .invalid { color: red; font-weight: bold; }
-        .latency-warning { color: orange; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 40px; background-color: #f9f9f9; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #333; text-align: center; }
+        .btn-run { display: block; width: 200px; margin: 20px auto; padding: 12px; background: #007bff; color: white; text-align: center; text-decoration: none; border-radius: 6px; font-weight: bold; transition: 0.3s; }
+        .btn-run:hover { background: #0056b3; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #eee; padding: 12px; text-align: left; }
+        th { background-color: #f4f7f6; color: #666; }
+        .valid { color: #28a745; font-weight: bold; }
+        .invalid { color: #dc3545; font-weight: bold; }
+        .chart-container { width: 100%; height: 300px; margin-bottom: 30px; }
     </style>
 </head>
 <body>
-    <h1>Rapport de Santé API (QoS & Contrat)</h1>
+
+<div class="container">
+    <h1>🚀 API Health Monitor</h1>
+
+    <a href="/run" class="btn-run">Lancer un Test (Run)</a>
+
+    <div class="chart-container">
+        <canvas id="latencyChart"></canvas>
+    </div>
+
     <table>
         <thead>
             <tr>
                 <th>Date / Heure</th>
-                <th>Status HTTP</th>
-                <th>Latence (ms)</th>
-                <th>Contrat Valide ?</th>
-                <th>Message d'erreur / Logs</th>
+                <th>Status</th>
+                <th>Latence</th>
+                <th>Contrat</th>
+                <th>Détails</th>
             </tr>
         </thead>
         <tbody>
             {% for run in runs %}
             <tr>
-                <td>{{ run[0] }}</td>
-                <td>{{ run[1] }}</td>
-                <td class="{{ 'latency-warning' if run[2] > 3000 else '' }}">
-                    {{ run[2]|round|int }} ms
-                </td>
+                <td>{{ run[0].split('.')[0] }}</td> <td>{{ run[1] if run[1] else 'ERR' }}</td>
+                <td>{{ run[2]|round|int }} ms</td>
                 <td class="{{ 'valid' if run[3] else 'invalid' }}">
-                    {{ "OUI" if run[3] else "NON" }}
+                    {{ "VALIDE" if run[3] else "ÉCHEC" }}
                 </td>
-                <td><small>{{ run[4] if run[4] else "Aucune erreur" }}</small></td>
+                <td><small style="color: #888;">{{ run[4] if run[4] else '-' }}</small></td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+</div>
+
+<script>
+    // Récupération des données pour le graphique depuis Flask
+    const labels = [{% for run in runs|reverse %} "{{ run[0].split(' ')[1].split('.')[0] }}", {% endfor %}];
+    const dataLatency = [{% for run in runs|reverse %} {{ run[2] }}, {% endfor %}];
+
+    const ctx = document.getElementById('latencyChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Latence de l\'API (ms)',
+                data: dataLatency,
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+</script>
+
 </body>
 </html>
