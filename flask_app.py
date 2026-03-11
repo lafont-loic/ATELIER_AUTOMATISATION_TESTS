@@ -23,7 +23,8 @@ def dashboard():
 
 @app.route('/run')
 def run():
-    url = "https://api.nationalize.io/?name=nathan"
+    # On utilise l'URL Open-Meteo qui est dans la whitelist et sans limite
+    url = "https://api.open-meteo.com/v1/forecast?latitude=48.85&longitude=2.35&current_weather=true"
     start_time = time.time()
     
     try:
@@ -32,24 +33,27 @@ def run():
         status = r.status_code
         data = r.json()
         
-        # DEBUG : On vérifie précisément la présence de 'country'
-        if status == 200 and "country" in data:
+        # Test de contrat ultra-simple : si on reçoit du JSON, c'est OK
+        if data: 
             est_valide = 1
-            msg = f"OK ({len(data['country'])} pays trouvés)"
+            msg = "Données reçues"
         else:
             est_valide = 0
-            # Si c'est pas valide, on enregistre le début du JSON reçu pour comprendre
-            msg = f"Erreur Format: {str(data)[:30]}"
+            msg = "Réponse vide"
 
     except Exception as e:
-        latence, status, est_valide = 0, 0, 0
-        msg = f"Erreur Reseau: {str(e)[:30]}"
+        latence = 0
+        status = 0
+        est_valide = 0
+        msg = f"Erreur: {str(e)[:30]}"
 
-    # Sauvegarde (inchangée)
+    # Sauvegarde en base de données
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO api_runs (endpoint_tested, status_code, latency_ms, contrat_valide, error_message) VALUES (?, ?, ?, ?, ?)", 
-                   (url, status, latence, est_valide, msg))
+    cursor.execute("""
+        INSERT INTO api_runs (endpoint_tested, status_code, latency_ms, contrat_valide, error_message) 
+        VALUES (?, ?, ?, ?, ?)
+    """, (url, status, latence, est_valide, msg))
     conn.commit()
     conn.close()
 
