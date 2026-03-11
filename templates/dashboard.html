@@ -1,38 +1,43 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Mon Dashboard API</title>
+    <title>Monitoring API RATP</title>
     <style>
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid black; padding: 8px; text-align: left; }
-        .success { color: green; }
-        .error { color: red; }
+        table { border-collapse: collapse; width: 100%; font-family: sans-serif; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        .valid { color: green; font-weight: bold; }
+        .invalid { color: red; font-weight: bold; }
+        .latency-warning { color: orange; }
     </style>
 </head>
 <body>
-    <h1>Historique des tests API</h1>
-    
-    <div>
-        <p>Latence moyenne : {{ avg_latency }} ms</p>
-    </div>
-
+    <h1>Rapport de Santé API (QoS & Contrat)</h1>
     <table>
-        <tr>
-            <th>Date</th>
-            <th>Status</th>
-            <th>Latence</th>
-            <th>Contrat Valide ?</th>
-        </tr>
-        {% for run in runs %}
-        <tr>
-            <td>{{ run.timestamp }}</td>
-            <td>{{ run.status_code }}</td>
-            <td>{{ run.latency_ms }} ms</td>
-            <td class="{{ 'success' if run.contrat_valide else 'error' }}">
-                {{ "OUI" if run.contrat_valide else "NON" }}
-            </td>
-        </tr>
-        {% endfor %}
+        <thead>
+            <tr>
+                <th>Date / Heure</th>
+                <th>Status HTTP</th>
+                <th>Latence (ms)</th>
+                <th>Contrat Valide ?</th>
+                <th>Message d'erreur / Logs</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for run in runs %}
+            <tr>
+                <td>{{ run[0] }}</td>
+                <td>{{ run[1] }}</td>
+                <td class="{{ 'latency-warning' if run[2] > 3000 else '' }}">
+                    {{ run[2]|round|int }} ms
+                </td>
+                <td class="{{ 'valid' if run[3] else 'invalid' }}">
+                    {{ "OUI" if run[3] else "NON" }}
+                </td>
+                <td><small>{{ run[4] if run[4] else "Aucune erreur" }}</small></td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
 </body>
 </html>
